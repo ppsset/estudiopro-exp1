@@ -1,0 +1,103 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum StandardReference {
+  NFPA
+  IEC
+  BS
+}
+
+model User {
+  id        String     @id @default(cuid())
+  email     String     @unique
+  name      String?
+  role      Role       @default(USER)
+  projects  Project[]
+  bookmarks Bookmark[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+}
+
+model Project {
+  id           String      @id @default(cuid())
+  name         String
+  location     String?
+  client       String?
+  voltageLevels String?
+  systemType   String?
+  notes        String?
+  userId       String
+  user         User        @relation(fields: [userId], references: [id])
+  moduleRuns   ModuleRun[]
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+}
+
+model ModuleRun {
+  id                String             @id @default(cuid())
+  moduleName        String
+  inputJson         Json
+  outputJson        Json
+  calculatedAt      DateTime           @default(now())
+  standardReference StandardReference
+  version           String
+  isCurrent         Boolean            @default(false)
+  projectId         String
+  project           Project            @relation(fields: [projectId], references: [id])
+}
+
+model Bookmark {
+  id         String   @id @default(cuid())
+  title      String
+  source     String
+  link       String
+  standard   StandardReference
+  savedAt    DateTime @default(now())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id])
+}
+
+model KnowledgeTopic {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  title       String
+  category    String
+  summary     String
+  contentJson Json
+  updatedBy   String
+  updatedAt   DateTime @updatedAt
+}
+
+model RssSource {
+  id        String   @id @default(cuid())
+  name      String
+  url       String
+  status    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model NewsItem {
+  id          String             @id @default(cuid())
+  title       String
+  source      String
+  summary     String
+  link        String
+  standard    StandardReference
+  category    String
+  region      String?
+  publishedAt DateTime
+  savedCount  Int                @default(0)
+  createdAt   DateTime           @default(now())
+}
